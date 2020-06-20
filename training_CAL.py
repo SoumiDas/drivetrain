@@ -28,6 +28,11 @@ params = {'name': 'CAL_whole_multigpu', 'type_': 'LSTM', 'lr': 1e-4, 'n_h': 100,
 model, opt = get_model(params)
 print('Model got')
 
+if os.path.exists(f"./total_models/"+params['name']+".pth")
+	model.load_state_dict(torch.load(f"./total_models/"+params['name']+".pth"))
+
+#model.eval().to(device);
+
 device = torch.device('cuda')
 
 if torch.cuda.device_count() > 1:
