@@ -35,7 +35,7 @@ if torch.cuda.device_count() > 1:
 
 #model = model.to(device)
 
-train_dl, valid_dl = get_data(data_path, params['seq_len'], batch_size=10)
+train_dl, valid_dl = get_data(data_path, params['seq_len'], batch_size=9)
 
 
 #device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
