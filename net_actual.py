@@ -135,6 +135,7 @@ class TaskBlock(nn.Module):
 
         # handle conditional affordances
         if self.cond:
+            d = d.cpu()
             bool_vec = get_bool_vec(d, self.n_h).to(x.device)
             x *= bool_vec
 

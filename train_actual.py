@@ -249,7 +249,7 @@ def validate(model, data_loader, loss_func):
 
     return val_loss, modified_loss, all_preds, all_labels#, a
 
-def fit(epochs, model, loss_func, opt, train_dl, valid_dl, dev='cuda', val_hist=None, val_hist_total=None, maper=None):
+def fit(epochs, model, params, loss_func, opt, train_dl, valid_dl, dev='cuda', val_hist=None, val_hist_total=None, maper=None):
     since = time.time()
 
     val_hist = [] if val_hist is None else val_hist
@@ -344,7 +344,7 @@ def fit(epochs, model, loss_func, opt, train_dl, valid_dl, dev='cuda', val_hist=
 
         if modified_loss < best_val_loss:
             best_val_loss = modified_loss
-            PATH = f"./models/{model.params.name}.pth"
+            PATH = f"./models/"+params['name']+".pth"
             torch.save(model.state_dict(), PATH)
             #best_model_wts = copy.deepcopy(model.state_dict())
             print("The best val loss is decreased in this epoch", "\n")
@@ -353,7 +353,7 @@ def fit(epochs, model, loss_func, opt, train_dl, valid_dl, dev='cuda', val_hist=
             
         if val_loss < best_val_loss_total:
             best_val_loss_total = val_loss
-            PATH = f"./total_models/{model.params.name}.pth"
+            PATH = f"./total_models/"+params['name']+".pth"
             torch.save(model.state_dict(), PATH)
             best_model_wts = copy.deepcopy(model.state_dict())
             print("The best val loss is decreased in this epoch", "\n")

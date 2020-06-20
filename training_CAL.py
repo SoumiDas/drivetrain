@@ -24,14 +24,24 @@ if not os.path.exists('models'):
 if not os.path.exists('total_models'):
 	os.mkdir('total_models')
 
-params = {'name': 'CAL_whole', 'type_': 'LSTM', 'lr': 1e-4, 'n_h': 100, 'p':0.44, 'seq_len':10}
+params = {'name': 'CAL_whole_multigpu', 'type_': 'LSTM', 'lr': 1e-4, 'n_h': 100, 'p':0.44, 'seq_len':10}
 model, opt = get_model(params)
 print('Model got')
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-model = model.to(device)
+device = torch.device('cuda')
+
+if torch.cuda.device_count() > 1:
+  modelmg = torch.nn.DataParallel(model,device_ids=[0, 1, 2, 3]).to(device)
+
+#model = model.to(device)
+
+train_dl, valid_dl = get_data(data_path, params['seq_len'], batch_size=10)
 
 
-train_dl, valid_dl = get_data(data_path, model.params.seq_len, batch_size=10)
+#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+#model = model.to(device)
 
-model, val_hist = fit(50, model, custom_loss, opt, train_dl, valid_dl)
+
+#train_dl, valid_dl = get_data(data_path, model.params.seq_len, batch_size=10)
+
+model, val_hist = fit(50, modelmg, params, custom_loss, opt, train_dl, valid_dl)
