@@ -86,7 +86,7 @@ def loss_batch(model, loss_func, preds, labels, opt=None):
 
 ### training wrappers
 
-def train(model, data_loader, loss_func, opt):
+def train(model, params, data_loader, loss_func, opt):
     device = next(model.parameters()).device
     train_loss = 0
     loss_rel = 0
@@ -97,6 +97,7 @@ def train(model, data_loader, loss_func, opt):
     loss_veh = 0
     
     cnt = 0
+    update = 0
     for inputs, labels in tqdm(data_loader):
         print('Image')
         print(cnt+1)
@@ -116,10 +117,21 @@ def train(model, data_loader, loss_func, opt):
         loss_haz += lh
         loss_sp += lsp
         loss_veh += lv
+
+        
         
         with open('train_minibatchLoss_uniform.txt','a') as fpmb:
             fpmb.write(str(l))
             fpmb.write('\n')
+
+        if update%10==0:
+            print("Update")
+            modelsave = copy.deepcopy(model)
+            modelsave.to('cpu')
+            PATH = f"./total_models/"+params['name']+".pth"
+            torch.save(modelsave.module.state_dict(), PATH)
+
+        update = update + 1
         
     train_loss /= len(data_loader)
     loss_rel /= len(data_loader)
@@ -275,7 +287,7 @@ def fit(epochs, model, params, loss_func, opt, train_dl, valid_dl, dev='cuda', v
             fpmb.write('==================================================')
             fpmb.write('\n')
     		
-        model = train(model, train_dl, loss_func, opt)
+        model = train(model, params, train_dl, loss_func, opt)
         torch.cuda.empty_cache()
         model.eval()
         
@@ -344,8 +356,10 @@ def fit(epochs, model, params, loss_func, opt, train_dl, valid_dl, dev='cuda', v
 
         if modified_loss < best_val_loss:
             best_val_loss = modified_loss
+            modelsave = copy.deepcopy(model)
+            modelsave.to('cpu')
             PATH = f"./models/"+params['name']+".pth"
-            torch.save(model.state_dict(), PATH)
+            torch.save(modelsave.module.state_dict(), PATH)
             #best_model_wts = copy.deepcopy(model.state_dict())
             print("The best val loss is decreased in this epoch", "\n")
             
@@ -353,9 +367,11 @@ def fit(epochs, model, params, loss_func, opt, train_dl, valid_dl, dev='cuda', v
             
         if val_loss < best_val_loss_total:
             best_val_loss_total = val_loss
+            modelsave = copy.deepcopy(model)
+            modelsave.to('cpu')
             PATH = f"./total_models/"+params['name']+".pth"
-            torch.save(model.state_dict(), PATH)
-            best_model_wts = copy.deepcopy(model.state_dict())
+            torch.save(modelsave.module.state_dict(), PATH)
+            best_model_wts = copy.deepcopy(modelsave.module.state_dict())
             print("The best val loss is decreased in this epoch", "\n")
             
             flag = epoch+1
@@ -383,5 +399,6 @@ def fit(epochs, model, params, loss_func, opt, train_dl, valid_dl, dev='cuda', v
     print('Best val loss achieved in the epoch: ', flag)
 
     # load best model weights
-    model.load_state_dict(best_model_wts)
+    #modelsave = model.to('cpu')
+    modelsave.load_state_dict(best_model_wts)
     return model, val_hist
