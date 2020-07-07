@@ -101,6 +101,7 @@ def train(model, params, data_loader, loss_func, opt):
     for inputs, labels in tqdm(data_loader):
         print('Image')
         print(cnt+1)
+        
         inputs['sequence'] = inputs['sequence'].to(device)
         #inputs['gametimeStamp'] = inputs['gametimeStamp'].to(device) #change
         #inputs = inputs.unsqueeze(0)

@@ -13,10 +13,10 @@ from dataloader_actual import CAL_Dataset
 from dataloader_actual import get_data, get_mini_data
 from train_actual import fit, custom_loss, validate
 from metrics_actual_changed import calc_metrics
-
+import time
 
 # paths
-data_path = 'dataset/'
+data_path = '../../transformed_CAL/'
 #data_path
 print("Path")
 print(os.getcwd())
@@ -27,7 +27,7 @@ if not os.path.exists('./models/'):
 if not os.path.exists('./total_models/'):
 	os.makedirs('total_models')
 
-params = {'name': 'CAL_whole_multigpu', 'type_': 'LSTM', 'lr': 1e-4, 'n_h': 100, 'p':0.44, 'seq_len':10}
+params = {'name': 'CAL_whole_multigpu_trans', 'type_': 'LSTM', 'lr': 1e-4, 'n_h': 100, 'p':0.44, 'seq_len':10}
 model, opt = get_model(params)
 print('Model got')
 
@@ -45,14 +45,16 @@ print(torch.cuda.device_count())
 #print(device)
 
 if torch.cuda.device_count() > 1:
-  model = torch.nn.DataParallel(model,device_ids=[0, 1, 2, 3]).to(device)
+  model = torch.nn.DataParallel(model,device_ids=[0, 1]).to(device)
 
 #print("Model device")
 #print(model.device)
 model = model.to(device)
 
+print("Data loading")
+start2 = time.time()
 train_dl, valid_dl = get_data(data_path, params['seq_len'], batch_size=9)
-
+print(time.time() - start2)
 
 #device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 #model = model.to(device)

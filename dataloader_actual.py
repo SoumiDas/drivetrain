@@ -3,7 +3,7 @@ import pandas as pd
 from PIL import Image
 #from ipdb import set_trace
 import bisect
-
+import time
 import torch
 from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
@@ -129,20 +129,20 @@ def get_data_transforms(t='train'):
     data_transforms = {
         'train': transforms.Compose([
             Augment(get_augmentations()),
-            Crop((0,120,800,480)),
-            Rescale(0.4),
+            #Crop((0,120,800,480)),
+            #Rescale(0.4),
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ]),
         'val': transforms.Compose([
-            Crop((0,120,800,480)),
-            Rescale(0.4),
+            #Crop((0,120,800,480)),
+            #Rescale(0.4),
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ]),
         'test': transforms.Compose([
-            Crop((0,120,800,480)),
-            Rescale(0.4),
+            #Crop((0,120,800,480)),
+            #Rescale(0.4),
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ]),
@@ -190,8 +190,10 @@ def collate_seq(batch):
 class CAL_Dataset(Dataset):
     def __init__(self, root_dir, t, seq_len, subset_len=0):
         assert t in ['train', 'val','test']
+        start = time.time()
+        print("Transform time: ")
         self.transform = get_data_transforms(t)
-
+        print(time.time()- start)
         # load im paths and labels
         #df_all = pd.read_csv(root_dir + 'annotations_drop_rem.csv')
        # df_all = torch.tensor(df_all.values)
@@ -255,23 +257,26 @@ class CAL_Dataset(Dataset):
         else:
             start = self.total_frames - self.seq_len
 
-        '''if start < idx + self.seq_len:
-            idx = start - self.seq_len'''
+        if start < idx + self.seq_len:
+            idx = start - self.seq_len
         
-        if start < idx:
-            idx = start
+        '''if start < idx:
+            idx = start'''
 
         frames = []
         sequenceid=[]
         for i in range(self.seq_len):
             im = Image.open(self.im_paths.iloc[idx+i])
+            
             im = self.transform(im)
+            #print("Inside seq")
+            
             frames.append(im.unsqueeze(0))
             sequenceid.append(torch.as_tensor([self.seqid.iloc[idx+i]]))
         inputs['sequence'] = torch.cat(frames)
 
         # get label of the last image
-        last_idx = idx + self.seq_len - 1
+        last_idx = idx + self.seq_len
         inputs['direction'] = np.array(self.direction[last_idx])
         inputs['seqid']= torch.cat(sequenceid)
         for k in self.labels.keys():
@@ -281,12 +286,15 @@ class CAL_Dataset(Dataset):
         return inputs, labels
 
 def get_data(data_path, seq_len, batch_size):
+    start1 = time.time()
     train_ds = CAL_Dataset(data_path, 'train', seq_len=seq_len)
+    print("Dataset loading")
+    print(time.time() - start1)
     val_ds = CAL_Dataset(data_path, 'val', seq_len=seq_len)
     #test_ds = CAL_Dataset(data_path, 'test', seq_len=seq_len)
     return (
-        DataLoader(train_ds, batch_size=batch_size, shuffle=True, pin_memory=False, num_workers=14),
-        DataLoader(val_ds, batch_size=batch_size*2, pin_memory=False, num_workers=14),
+        DataLoader(train_ds, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=14),
+        DataLoader(val_ds, batch_size=batch_size*2, pin_memory=True, num_workers=14),
         #DataLoader(test_ds, batch_size=batch_size * 2, pin_memory=False, num_workers=14),
     )
 
