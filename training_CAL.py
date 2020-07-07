@@ -16,7 +16,7 @@ from metrics_actual_changed import calc_metrics
 import time
 
 # paths
-data_path = '../../transformed_CAL/'
+data_path = './transformed_CAL/'
 #data_path
 print("Path")
 print(os.getcwd())
@@ -45,7 +45,7 @@ print(torch.cuda.device_count())
 #print(device)
 
 if torch.cuda.device_count() > 1:
-  model = torch.nn.DataParallel(model,device_ids=[0, 1]).to(device)
+  model = torch.nn.DataParallel(model,device_ids=[0, 1, 2, 3]).to(device)
 
 #print("Model device")
 #print(model.device)
